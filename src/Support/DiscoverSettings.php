@@ -2,6 +2,7 @@
 
 namespace Spatie\LaravelSettings\Support;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use Spatie\LaravelSettings\Settings;
@@ -56,6 +57,10 @@ class DiscoverSettings
     {
         if (empty($this->directories)) {
             return [];
+        }
+
+        foreach ($this->directories as $directory) {
+            (new Filesystem())->ensureDirectoryExists($directory);
         }
 
         $files = (new Finder())->files()->in($this->directories);
