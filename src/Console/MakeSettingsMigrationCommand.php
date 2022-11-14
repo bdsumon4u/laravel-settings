@@ -38,11 +38,13 @@ class MakeSettingsMigrationCommand extends Command
 
         $this->files->put(
             $this->getPath($name, $path),
-            str_replace('{{ class }}', $name, $this->getStub())
+            str_replace('{{ class }}', $name, $this->getMigrationStub())
         );
+
+        $this->createSettings(Str::after($name, 'Create'));
     }
 
-    protected function getStub(): string
+    protected function getMigrationStub(): string
     {
         return <<<EOT
 <?php
@@ -54,6 +56,38 @@ class {{ class }} extends SettingsMigration
     public function up(): void
     {
 
+    }
+}
+
+EOT;
+    }
+
+    protected function createSettings($name)
+    {
+        $group = Str::of($name)->beforeLast('Settings')->kebab();
+
+        $this->files->ensureDirectoryExists(app_path('Settings'));
+
+        $this->files->put(
+            app_path('Settings/'.$name.'.php'),
+            str_replace(['{{ class }}', '{{ group }}'], [$name, $group], $this->getSettingsStub())
+        );
+    }
+
+    protected function getSettingsStub(): string
+    {
+        return <<<EOT
+<?php
+
+namespace App\Settings;
+
+use Spatie\LaravelSettings\Settings;
+
+class {{ class }} extends Settings
+{
+    public static function group(): string
+    {
+        return '{{ group }}';
     }
 }
 
