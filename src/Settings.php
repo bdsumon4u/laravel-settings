@@ -7,7 +7,9 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use ReflectionNamedType;
 use ReflectionProperty;
 use Spatie\LaravelSettings\Events\SavingSettings;
 use Spatie\LaravelSettings\Events\SettingsLoaded;
@@ -17,6 +19,8 @@ use Spatie\LaravelSettings\Support\Crypto;
 
 abstract class Settings implements Arrayable, Jsonable, Responsable
 {
+    private array $_properties = [];
+
     private SettingsMapper $mapper;
 
     private SettingsConfig $config;
@@ -26,6 +30,60 @@ abstract class Settings implements Arrayable, Jsonable, Responsable
     private bool $configInitialized = false;
 
     protected ?Collection $originalValues = null;
+
+    public function columns()
+    {
+        $columns = []; // [$name, $encrypted]
+        foreach ($this->_properties as $name => $property) {
+            $encrypted = $this->config->isEncrypted($name);
+
+            if ($property->isInitialized($this)) {
+                continue;
+            }
+
+            try {
+                $columns[$name] = [$this->defaults()[$name], $encrypted];
+                continue;
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
+
+            if (! $type = $property->getType()) {
+                continue;
+            }
+
+            if ($type->allowsNull()) {
+                $columns[$name] = [null, $encrypted];
+                continue;
+            }
+
+            if (! $type instanceof ReflectionNamedType) {
+                continue;
+            }
+
+            $typeName = $type->getName();
+            if ($type->isBuiltin()) {
+                $columns[$name] = [Arr::get(config('settings.defaults'), $typeName), $encrypted];
+                continue;
+            }
+
+            if (enum_exists($typeName)) {
+                $columns[$name] = [Arr::first($typeName::cases()), $encrypted];
+                continue;
+            }
+
+            if (class_exists($typeName)) {
+                try {
+                    $columns[$name] = [app($typeName), $encrypted];
+                    continue;
+                } catch (\Throwable $th) {
+                    // What if class needs parameters?
+                }
+            }
+        }
+
+        return $columns;
+    }
 
     abstract public static function group(): string;
 
@@ -40,6 +98,11 @@ abstract class Settings implements Arrayable, Jsonable, Responsable
     }
 
     public static function encrypted(): array
+    {
+        return [];
+    }
+
+    public function defaults(): array
     {
         return [];
     }
@@ -73,10 +136,11 @@ abstract class Settings implements Arrayable, Jsonable, Responsable
         $this->ensureConfigIsLoaded();
 
         foreach ($this->config->getReflectedProperties() as $name => $property) {
-            if (method_exists($property, 'isReadOnly') && $property->isReadOnly()) {
+            if ($name === '_properties' || method_exists($property, 'isReadOnly') && $property->isReadOnly()) {
                 continue;
             }
 
+            $this->_properties[$name] = $property;
             unset($this->{$name});
         }
 

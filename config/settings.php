@@ -78,4 +78,15 @@ return [
      * need to be searched each time the application boots up.
      */
     'discovered_settings_cache_path' => storage_path('app/laravel-settings'),
+
+    /**
+     * Default values for builtin data types.
+     */
+    'defaults' => [
+        'int' => 0,
+        'array' => [],
+        'string' => '',
+        'float' => 0.0,
+        'bool' => false,
+    ],
 ];
