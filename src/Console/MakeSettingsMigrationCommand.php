@@ -41,7 +41,9 @@ class MakeSettingsMigrationCommand extends Command
             str_replace('{{ class }}', $name, $this->getMigrationStub())
         );
 
-        $this->createSettings(Str::after($name, 'Create'));
+        if (Str::startsWith($name, 'Create')) {
+            $this->createSettings(Str::after($name, 'Create'));
+        }
     }
 
     protected function getMigrationStub(): string
