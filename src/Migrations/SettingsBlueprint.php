@@ -30,9 +30,19 @@ class SettingsBlueprint
         $this->migrator->add($this->prependWithGroup($name), $value, $encrypted);
     }
 
+    public function addIfNotExists(string $name, $value = null, bool $encrypted = false): void
+    {
+        $this->migrator->addIfNotExists($this->prependWithGroup($name), $value, $encrypted);
+    }
+
     public function delete(string $name): void
     {
         $this->migrator->delete($this->prependWithGroup($name));
+    }
+
+    public function deleteIfExists(string $name): void
+    {
+        $this->migrator->deleteIfExists($this->prependWithGroup($name));
     }
 
     public function update(string $name, Closure $closure, bool $encrypted = false): void

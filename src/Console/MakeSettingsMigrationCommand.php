@@ -55,10 +55,10 @@ use Spatie\LaravelSettings\Migrations\SettingsMigration;
 
 class {{ class }} extends SettingsMigration
 {
-    public function up(): void
-    {
+    // public function up(): void
+    // {
 
-    }
+    // }
 }
 
 EOT;

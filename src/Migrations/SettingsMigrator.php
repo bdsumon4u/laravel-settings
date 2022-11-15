@@ -61,6 +61,15 @@ class SettingsMigrator
         $this->createProperty($property, $value);
     }
 
+    public function addIfNotExists(string $property, $value = null, bool $encrypted = false): void
+    {
+        try {
+            $this->add($property, $value, $encrypted);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function delete(string $property): void
     {
         if (! $this->checkIfPropertyExists($property)) {
@@ -97,6 +106,15 @@ class SettingsMigrator
     public function addEncrypted(string $property, $value = null): void
     {
         $this->add($property, $value, true);
+    }
+
+    public function addEncryptedIfNotExists(string $property, $value = null): void
+    {
+        try {
+            $this->add($property, $value, true);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function updateEncrypted(string $property, Closure $closure): void
