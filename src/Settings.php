@@ -37,7 +37,13 @@ abstract class Settings implements Arrayable, Jsonable, Responsable
         foreach ($this->_properties as $name => $property) {
             $encrypted = $this->config->isEncrypted($name);
 
+            if ($property->hasDefaultValue()) {
+                $columns[$name] = [$property->getDefaultValue(), $encrypted];
+                continue;
+            }
+
             if ($property->isInitialized($this)) {
+                $columns[$name] = [$property->getValue(), $encrypted];
                 continue;
             }
 
